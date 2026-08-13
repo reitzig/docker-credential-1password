@@ -1,7 +1,225 @@
 package main
 
-import "fmt"
+import (
+	"bufio"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/1password/onepassword-sdk-go"
+)
+
+const appName = "docker-credential-1password"
+const configFilename = "credential-1password.json"
+
+var appVersion = "dev" // goreleaser will inject real value
+
+type DockerAuth struct {
+	Username string
+	Secret   string
+}
+
+type Config struct {
+	Account    string
+	SecretRefs map[string]AuthSecretRefs
+}
+
+type AuthSecretRefs struct {
+	Username AuthSecretRef
+	Secret   AuthSecretRef
+}
+
+type AuthSecretRef struct {
+	Vault string
+	Item  string
+	Field string
+}
+
+func (r AuthSecretRef) asUri() string {
+	return fmt.Sprintf("op://%s/%s/%s", r.Vault, r.Item, r.Field)
+}
+
+// As per https://docs.docker.com/reference/cli/docker/#configuration-files
+func configFile() (string, error) {
+	homeDir, homeSet := os.LookupEnv("HOME")
+	customDir, customSet := os.LookupEnv("DOCKER_CONFIG")
+
+	if customSet {
+		return filepath.Join(customDir, configFilename), nil
+	} else if homeSet {
+		return filepath.Join(homeDir, ".docker", configFilename), nil
+	}
+
+	return "", fmt.Errorf("can not locate Docker client config dir; set 'HOME' or 'DOCKER_CONFIG'")
+}
+
+func readConfig() (Config, error) {
+	config := Config{}
+	file, err := configFile()
+	if err != nil {
+		return config, err
+	}
+
+	if exists, err := fileExists(file); err != nil {
+		return config, fmt.Errorf("error accessing config file '%s': %v", file, err)
+	} else if exists {
+		//fmt.Printf("Found config file: %s\n", file) // TODO remove or log properly
+		content, err := os.ReadFile(file)
+		//fmt.Printf("Read config JSON: %s\n", string(content)) // TODO remove or log properly
+		if err != nil {
+			return config, fmt.Errorf("error reading config file '%s': %v", file, err)
+		}
+
+		err = json.Unmarshal(content, &config)
+		if err != nil {
+			return config, fmt.Errorf("error parsing config file '%s': %v", file, err)
+		}
+	}
+
+	return config, nil
+}
+
+func registryMatches(registryUrlA string, registryUrlB string) bool {
+	return strings.TrimPrefix(strings.TrimSuffix(registryUrlA, "/"), "https://") ==
+		strings.TrimPrefix(strings.TrimSuffix(registryUrlB, "/"), "https://")
+}
+
+func opRefFor(registry string) (AuthSecretRefs, error) {
+	config, err := readConfig()
+	if err != nil {
+		return AuthSecretRefs{}, err
+	}
+
+	for reg, refs := range config.SecretRefs {
+		if registryMatches(reg, registry) {
+			return refs, nil
+		}
+	}
+
+	// TODO: ask user for it; store to file
+	return AuthSecretRefs{}, fmt.Errorf("NYI: ask user for missing refs")
+}
+
+func accountName() (string, error) {
+	config, err := readConfig()
+	if err != nil {
+		return "", err
+	}
+	//fmt.Printf("found config: %+v\n", config) // TODO remove or log properly
+
+	if config.Account == "" {
+		// TODO: ask user for it; store to file
+		return "", fmt.Errorf("NYI: ask user for missing account name")
+	}
+	//_, _ = fmt.Printf("found Account: %s\n", config.Account) // TODO remove or log properly
+
+	return config.Account, nil
+}
+
+func authFor(registry string) (DockerAuth, error) {
+	account, err := accountName()
+	if err != nil {
+		return DockerAuth{}, err
+	}
+
+	// TODO: support OP_SERVICE_ACCOUNT_TOKEN ?
+	client, err := onepassword.NewClient(context.Background(),
+		onepassword.WithDesktopAppIntegration(account),
+		onepassword.WithIntegrationInfo(appName, appVersion),
+	)
+	if err != nil {
+		return DockerAuth{}, err
+	}
+
+	opRefs, err := opRefFor(registry)
+	if err != nil {
+		return DockerAuth{}, err
+	}
+
+	//fmt.Printf("will retrieve secrets: '%s', '%s'\n", opRefs.Username.asUri(), opRefs.Secret.asUri()) // TODO remove or log properly
+	responses, err := client.Secrets().ResolveAll(context.Background(), []string{
+		opRefs.Username.asUri(),
+		opRefs.Secret.asUri(),
+	})
+	if err != nil {
+		return DockerAuth{}, err
+	}
+
+	dockerAuth := DockerAuth{}
+	for ref, response := range responses.IndividualResponses {
+		//fmt.Printf("Checking response for: '%s'\n", ref)  // TODO remove or log properly
+		if response.Error != nil {
+			return DockerAuth{}, fmt.Errorf("secret retrieval failed: %v", *response.Error)
+		} else if ref == opRefs.Username.asUri() {
+			dockerAuth.Username = response.Content.Secret
+		} else if ref == opRefs.Secret.asUri() {
+			dockerAuth.Secret = response.Content.Secret
+		} else {
+			return DockerAuth{}, fmt.Errorf("received unexpected secret for '%s'", ref)
+		}
+	}
+	if dockerAuth.Username == "" || dockerAuth.Secret == "" {
+		return DockerAuth{}, fmt.Errorf("received incomplete response")
+	}
+
+	return dockerAuth, nil
+}
+
+func fileExists(name string) (bool, error) {
+	info, err := os.Stat(name)
+
+	if err == nil {
+		return !info.IsDir(), nil
+	}
+
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+
+	return false, err
+}
 
 func main() {
-	fmt.Println("Hello, World!")
+	if len(os.Args) > 1 {
+		switch command := os.Args[1]; command {
+		case "get":
+			reader := bufio.NewReader(os.Stdin)
+
+			registryUrl, err := reader.ReadString('\n')
+			if err != nil && err != io.EOF {
+				_, _ = fmt.Fprintf(os.Stderr, "Failed to read from stdin: %v\n", err)
+				os.Exit(1)
+			}
+			registryUrl = strings.TrimSpace(registryUrl)
+
+			auth, err := authFor(registryUrl)
+			if err != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "Could not retrieve credentials for '%s': %v\n", registryUrl, err)
+				os.Exit(2)
+			}
+
+			data, err := json.Marshal(auth)
+			if err != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "Failed to encode auth as JSON: %v\n", err)
+				os.Exit(3)
+			}
+
+			fmt.Println(string(data))
+
+		case "store", "erase":
+			_, _ = fmt.Fprintf(os.Stderr, "Command '%s' not implemented; manage secrets through 1Password\n", command)
+			os.Exit(4)
+		default:
+			_, _ = fmt.Fprintf(os.Stderr, "Unknown command '%s'; use 'get'\n", command)
+			os.Exit(5)
+		}
+	} else {
+		_, _ = fmt.Fprintf(os.Stderr, "No command given; use 'get'\n")
+		os.Exit(6)
+	}
 }
