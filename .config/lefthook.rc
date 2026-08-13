@@ -1,0 +1,1 @@
+ eval "$(mise env -s bash)"

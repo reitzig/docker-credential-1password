@@ -1,0 +1,33 @@
+rc: lefthook.rc
+
+post-checkout:
+  piped: true
+  commands:
+    update-tools:
+      priority: 1
+      glob: "mise.*"
+      run: mise install
+    update-deps:
+      priority: 2
+      glob: "go.*"
+      run: go mod tidy
+pre-commit:
+  piped: true
+  commands:
+    formatter:
+      priority: 1
+      glob: "*.go"
+      run: go fmt {staged_files}
+      stage_fixed: true
+#    editorconfig:
+#      priority: 2
+#      run: ec
+    linter:
+      priority: 2
+      run: go vet
+commit-msg:
+  skip:
+    - ref: "wip/*"
+  commands:
+    cog:
+      run: cog --config .config/cog.toml verify --ignore-fixup-commits --file {1}

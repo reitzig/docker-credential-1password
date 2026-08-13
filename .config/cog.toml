@@ -1,0 +1,6 @@
+from_latest_tag = true
+ignore_merge_commits = false # we don't want them
+ignore_fixup_commits = false # we don't want to _merge_ them
+disable_changelog = true # -> changie
+disable_bump_commit = true # don't use it
+tag_prefix = "v"

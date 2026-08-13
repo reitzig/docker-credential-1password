@@ -1,0 +1,36 @@
+{
+  "extends": [
+    "config:best-practices",
+    "schedule:weekly"
+  ],
+  "labels": [
+    "dependencies",
+    "no changelog"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "matchUpdateTypes": [
+        "digest",
+        "lockFileMaintenance",
+        "patch",
+        "pin",
+        "pinDigest"
+      ],
+      "groupName": "patches",
+      "automerge": true,
+      "automergeType": "branch"
+    },
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "major"
+      ],
+      "schedule": [
+        "before 9am on the first day of the month"
+      ]
+    }
+  ]
+}
