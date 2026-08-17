@@ -15,31 +15,18 @@ before:
 builds:
   - main: ./...
     env:
-      - CGO_ENABLED=1
+      - CGO_ENABLED=1 # cf. https://github.com/1Password/onepassword-sdk-go?tab=readme-ov-file#cross-compilation
     goos:
       - linux
-      - windows
-#      - darwin
     goarch:
       - arm64
       - amd64
-#    ignore:
-#      - goos: darwin
-#        goarch: amd64
     overrides:
       - goos: linux
         goarch: arm64
         env:
           - CC="aarch64-linux-gnu-gcc"
           - CXX="aarch64-linux-gnu-g++"
-#      - goos: darwin
-#        goarch: arm64
-#        env:
-#          - CC="/usr/bin/aarch64-linux-gnu-gcc"
-#          - CXX="/usr/bin/aarch64-linux-gnu-g++"
-
-# archives:
-#- format: binary
 
 archives:
   - formats: [tar.gz]
@@ -48,18 +35,13 @@ archives:
       {{ .ProjectName }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
-    format_overrides:
-      - goos: windows
-        formats: [zip]
     files:
       - LICENSE
       - README.md
       - CHANGELOG.md
-changelog:
+changelog: # -> changie
   disable: false
 
 release:
@@ -69,4 +51,4 @@ release:
 
     ---
 
-    Released with [GoReleaser](https://github.com/goreleaser/goreleaser).
+    Released with [changie](https://github.com/miniscruff/changie) and [GoReleaser](https://github.com/goreleaser/goreleaser).

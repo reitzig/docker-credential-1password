@@ -1,7 +1,7 @@
 # docker-credential-1password
 
 Use 1Password as read-only credential store for the Docker CLI.
-This avoids storing registry credentials on disk.
+This avoids storing registry credentials on disk or duplicating them to a second store.
 
 > [!NOTE]
 > This program is _not_ a full credential helper in the sense of 
