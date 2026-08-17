@@ -12,3 +12,20 @@ go = '1.26'
 goreleaser = '2'
 golangci-lint = '2'
 lefthook = '2'
+
+[tasks.build]
+run = "goreleaser build --snapshot --clean --single-target"
+
+[tasks.build-all]
+run = "goreleaser build --snapshot --clean"
+
+[tasks.lint]
+run = [
+    "golangci-lint run",
+    "goreleaser check",
+    "ec --config .config/editorconfig-checker.json",
+    "cog --config .config/cog.toml check",
+]
+
+[tasks.test]
+run = "go test -cover ./..."
