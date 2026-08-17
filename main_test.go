@@ -42,7 +42,7 @@ func TestAuthSecretRefs_asUris(t *testing.T) {
 				Item:  tt.fields.item,
 				Field: tt.fields.field,
 			}
-			if got := r.asUri(); !reflect.DeepEqual(got, tt.want) {
+			if got := r.asURI(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("asUris() = %v, want %v", got, tt.want)
 			} else {
 				err := onepassword.Secrets.ValidateSecretReference(context.Background(), got)

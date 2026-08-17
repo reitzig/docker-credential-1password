@@ -6,5 +6,5 @@ changie = "1"
 cocogitto = '7'
 go = '1.26'
 goreleaser = '2'
-#golangci-lint = '1'
+golangci-lint = '2'
 lefthook = '2'

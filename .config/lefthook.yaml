@@ -19,12 +19,10 @@ pre-commit:
       glob: "*.go"
       run: go fmt {staged_files}
       stage_fixed: true
-#    editorconfig:
-#      priority: 2
-#      run: ec
     linter:
       priority: 2
-      run: go vet
+      glob: "*.go"
+      run: golangci-lint run {staged_files}
 commit-msg:
   skip:
     - ref: "wip/*"

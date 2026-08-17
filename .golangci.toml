@@ -1,0 +1,18 @@
+version = '2'
+
+[linters]
+enable = [
+  'exhaustive',
+  'govet',
+  'nilnil',
+  'revive'
+]
+
+[linters.exclusions]
+presets = [
+  'comments'
+#  'common-false-positives',
+#  'legacy',
+#  'std-error-handling'
+]
+

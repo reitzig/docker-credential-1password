@@ -40,7 +40,7 @@ type AuthSecretRef struct {
 	Field string
 }
 
-func (r AuthSecretRef) asUri() string {
+func (r AuthSecretRef) asURI() string {
 	return fmt.Sprintf("op://%s/%s/%s", r.Vault, r.Item, r.Field)
 }
 
@@ -84,9 +84,9 @@ func readConfig() (Config, error) {
 	return config, nil
 }
 
-func registryMatches(registryUrlA string, registryUrlB string) bool {
-	return strings.TrimPrefix(strings.TrimSuffix(registryUrlA, "/"), "https://") ==
-		strings.TrimPrefix(strings.TrimSuffix(registryUrlB, "/"), "https://")
+func registryMatches(registryURLA string, registryURLB string) bool {
+	return strings.TrimPrefix(strings.TrimSuffix(registryURLA, "/"), "https://") ==
+		strings.TrimPrefix(strings.TrimSuffix(registryURLB, "/"), "https://")
 }
 
 func opRefFor(registry string) (AuthSecretRefs, error) {
@@ -147,8 +147,8 @@ func authFor(registry string) (DockerAuth, error) {
 
 	//fmt.Printf("will retrieve secrets: '%s', '%s'\n", opRefs.Username.asUri(), opRefs.Secret.asUri()) // TODO remove or log properly
 	responses, err := client.Secrets().ResolveAll(context.Background(), []string{
-		opRefs.Username.asUri(),
-		opRefs.Secret.asUri(),
+		opRefs.Username.asURI(),
+		opRefs.Secret.asURI(),
 	})
 	if err != nil {
 		return DockerAuth{}, err
@@ -159,9 +159,9 @@ func authFor(registry string) (DockerAuth, error) {
 		//fmt.Printf("Checking response for: '%s'\n", ref)  // TODO remove or log properly
 		if response.Error != nil {
 			return DockerAuth{}, fmt.Errorf("secret retrieval failed: %v", *response.Error)
-		} else if ref == opRefs.Username.asUri() {
+		} else if ref == opRefs.Username.asURI() {
 			dockerAuth.Username = response.Content.Secret
-		} else if ref == opRefs.Secret.asUri() {
+		} else if ref == opRefs.Secret.asURI() {
 			dockerAuth.Secret = response.Content.Secret
 		} else {
 			return DockerAuth{}, fmt.Errorf("received unexpected secret for '%s'", ref)
@@ -182,7 +182,7 @@ func allRegistriesAndUsernames() (map[string]string, error) {
 
 	nameRefs := map[string]string{}
 	for reg, refs := range config.SecretRefs {
-		nameRefs[reg] = refs.Username.asUri()
+		nameRefs[reg] = refs.Username.asURI()
 	}
 
 	client, err := opClient()
@@ -218,29 +218,29 @@ func fileExists(name string) (bool, error) {
 	return false, err
 }
 
-func readRegistryUrl() (string, error) {
+func readRegistryURL() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 
-	registryUrl, err := reader.ReadString('\n')
+	registryURL, err := reader.ReadString('\n')
 	if err != nil && err != io.EOF {
 		return "", err
 	}
-	return strings.TrimSpace(registryUrl), nil
+	return strings.TrimSpace(registryURL), nil
 }
 
 func main() {
 	if len(os.Args) > 1 {
 		switch command := os.Args[1]; command {
 		case "get":
-			registryUrl, err := readRegistryUrl()
+			registryURL, err := readRegistryURL()
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "Failed to read registry URL from stdin: %v\n", err)
 				os.Exit(1)
 			}
 
-			auth, err := authFor(registryUrl)
+			auth, err := authFor(registryURL)
 			if err != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "Could not retrieve credentials for '%s': %v\n", registryUrl, err)
+				_, _ = fmt.Fprintf(os.Stderr, "Could not retrieve credentials for '%s': %v\n", registryURL, err)
 				os.Exit(2)
 			}
 
