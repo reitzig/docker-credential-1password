@@ -1,0 +1,42 @@
+name: Trigger Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger-release:
+    runs-on: 'ubuntu-latest'
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        fetch-depth: 0
+
+    - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+
+    - name: Assemble changelog
+      id: changelog
+      run: |
+          changie batch auto
+          changie merge
+          git status
+
+    - name: Commit changelog
+      run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+
+          git add ".changes/${{ steps.changelog.outputs.version }}.md"
+          git commit --all -m "chore(docs): CHANGELOG for ${{ steps.changelog.outputs.version }}"
+          git push origin
+
+    - name: Run GoReleaser
+      run: |
+        goreleaser release --clean \
+          --release-notes=.changes/${{ steps.changelog.outputs.version }}.md \
+          --verbose \
+          --skip=validate
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GORELEASER_CURRENT_TAG: "${{ steps.changelog.outputs.version }}"

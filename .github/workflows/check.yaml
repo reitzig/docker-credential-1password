@@ -1,0 +1,109 @@
+name: Checks
+
+on:
+  push:
+    branches:
+    - main
+    - renovate/**
+    tags:
+    - 'v*'
+  pull_request:
+    types:
+    - opened
+    - synchronize
+    - reopened
+
+jobs:
+  changes:
+    name: Detect Changes # as a workaround for lack of out-of-the-box fine-grained control
+    runs-on: 'ubuntu-latest'
+    permissions:
+      pull-requests: read
+    outputs:
+      application: ${{ steps.filter.outputs.application }}
+      linter: ${{ steps.filter.outputs.linter }}
+      build: ${{ steps.filter.outputs.build }}
+    steps:
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
+        id: filter
+        with:
+          filters: |
+            application:
+              - '**/*.go'
+              - 'go.*'
+            build:
+              - 'go.*'
+              - '.config/mise.*'
+              - '.config/goreleaser.yaml'
+              - '.github/workflows/check.yaml'
+
+  conventional-commits:
+    name: Conventional Commits
+    runs-on: 'ubuntu-latest'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }} # here, we're not interested in the merge commit
+          fetch-depth: '0'
+      - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+
+      - name: cog check
+        run: cog --config .config/cog.toml check
+
+  lint:
+    runs-on: 'ubuntu-latest'
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+    - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+
+    - name: golangci-lint
+      run: golangci-lint run
+
+  test:
+    runs-on: 'ubuntu-latest'
+    needs: changes
+    if: ${{ needs.changes.outputs.application == 'true' }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+    - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+
+    - name: Unit Tests
+      run: go test -cover ./...
+
+
+  validate-goreleaser:
+    name: Validate Build
+    runs-on: 'ubuntu-latest'
+    needs: changes
+    if: ${{ needs.changes.outputs.build == 'true' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+
+      - name: Validate config
+        run: goreleaser check
+
+      # TODO: is caching worth it here? Observe!
+      # - name: Install cross-compiler
+      #   uses: awalsh128/cache-apt-pkgs-action@v1
+      #   with:
+      #     packages: gcc-14-aarch64-linux-gnu-base g++-aarch64-linux-gnu
+
+      - name: Install cross-compiler
+        run: |
+          sudo apt-get update \
+          && sudo apt-get install -y \
+            'gcc-14-aarch64-linux-gnu-base' \
+            'g++-aarch64-linux-gnu'
+
+      - name: Check build setup
+        run: goreleaser build --clean --snapshot --verbose
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: docker-credential-1password_dist_${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,44 @@
+name: Confirm Releasability
+
+on:
+  pull_request:
+    types:
+    - opened
+    - synchronize
+    - reopened
+    - unlabeled
+    - labeled
+
+jobs:
+  contains-change-notes:
+    if: ${{ ! contains(github.event.pull_request.labels.*.name, 'no changelog') }}
+    runs-on: 'ubuntu-latest'
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        ref: ${{ github.event.pull_request.head.sha }} # here, we're not interested in the merge commit
+
+    # Kudos: https://github.com/miniscruff/changie/blob/76fdd65ab31047fd6d506f800a6293f3b2a1ead0/.github/workflows/changelog-check.yml # editorconfig-checker-disable-line
+    - name: "Check for changelog entries"
+      uses: brettcannon/check-for-changed-files@d85c64d17b3c1d0ac57c9cc46ea39399b0d6fa71 # v1.2.2
+      with:
+        file-pattern: |
+          .changes/unreleased/*.yaml
+        skip-label: "no changelog"
+        token: "${{ secrets.GITHUB_TOKEN }}"
+        failure-message: |
+          Missing a new changelog entry.
+          Please add one with `changie new`, or
+          apply label '${skip-label}' to the pull request."
+
+    - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+
+    - name: Test changelog assembly
+      run: |
+        changie next auto
+        changie batch auto
+        changie merge
+        changie latest
