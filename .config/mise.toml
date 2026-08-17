@@ -1,3 +1,6 @@
+[settings]
+minimum_release_age = "3d"
+
 [env]
 CHANGIE_CONFIG_PATH = "{{- config_root -}}/.config/changie.yaml"
 
