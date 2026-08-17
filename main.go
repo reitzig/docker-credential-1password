@@ -121,22 +121,26 @@ func accountName() (string, error) {
 	return config.Account, nil
 }
 
-func authFor(registry string) (DockerAuth, error) {
+func opClient() (*onepassword.Client, error) {
 	account, err := accountName()
 	if err != nil {
-		return DockerAuth{}, err
+		return nil, err
 	}
 
 	// TODO: support OP_SERVICE_ACCOUNT_TOKEN ?
-	client, err := onepassword.NewClient(context.Background(),
+	return onepassword.NewClient(context.Background(),
 		onepassword.WithDesktopAppIntegration(account),
 		onepassword.WithIntegrationInfo(appName, appVersion),
 	)
+}
+
+func authFor(registry string) (DockerAuth, error) {
+	opRefs, err := opRefFor(registry)
 	if err != nil {
 		return DockerAuth{}, err
 	}
 
-	opRefs, err := opRefFor(registry)
+	client, err := opClient()
 	if err != nil {
 		return DockerAuth{}, err
 	}
@@ -170,6 +174,36 @@ func authFor(registry string) (DockerAuth, error) {
 	return dockerAuth, nil
 }
 
+func allRegistriesAndUsernames() (map[string]string, error) {
+	config, err := readConfig()
+	if err != nil {
+		return map[string]string{}, err
+	}
+
+	nameRefs := map[string]string{}
+	for reg, refs := range config.SecretRefs {
+		nameRefs[reg] = refs.Username.asUri()
+	}
+
+	client, err := opClient()
+	if err != nil {
+		return map[string]string{}, err
+	}
+
+	names := map[string]string{}
+
+	for reg, nameRef := range nameRefs {
+		response, err := client.Secrets().Resolve(context.Background(), nameRef)
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Could not retrieve username for '%s': %v\n", reg, err)
+		} else {
+			names[reg] = response
+		}
+	}
+
+	return names, nil
+}
+
 func fileExists(name string) (bool, error) {
 	info, err := os.Stat(name)
 
@@ -184,18 +218,25 @@ func fileExists(name string) (bool, error) {
 	return false, err
 }
 
+func readRegistryUrl() (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+
+	registryUrl, err := reader.ReadString('\n')
+	if err != nil && err != io.EOF {
+		return "", err
+	}
+	return strings.TrimSpace(registryUrl), nil
+}
+
 func main() {
 	if len(os.Args) > 1 {
 		switch command := os.Args[1]; command {
 		case "get":
-			reader := bufio.NewReader(os.Stdin)
-
-			registryUrl, err := reader.ReadString('\n')
-			if err != nil && err != io.EOF {
-				_, _ = fmt.Fprintf(os.Stderr, "Failed to read from stdin: %v\n", err)
+			registryUrl, err := readRegistryUrl()
+			if err != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "Failed to read registry URL from stdin: %v\n", err)
 				os.Exit(1)
 			}
-			registryUrl = strings.TrimSpace(registryUrl)
 
 			auth, err := authFor(registryUrl)
 			if err != nil {
@@ -206,6 +247,20 @@ func main() {
 			data, err := json.Marshal(auth)
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "Failed to encode auth as JSON: %v\n", err)
+				os.Exit(3)
+			}
+
+			fmt.Println(string(data))
+		case "list":
+			names, err := allRegistriesAndUsernames()
+			if err != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "Could not retrieve usernames': %v\n", err)
+				os.Exit(2)
+			}
+
+			data, err := json.Marshal(names)
+			if err != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "Failed to encode usernames as JSON: %v\n", err)
 				os.Exit(3)
 			}
 

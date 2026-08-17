@@ -108,6 +108,12 @@ Add additional registries to `secretRefs` in a similar fashion.
 > > op://<vault name>/<item name>/<field name>"
 > > ```
 
+Run
+```bash
+docker-credential-1password list
+```
+to check the configuration.
+
 Now simply run `docker pull` or any other command that requires authentication;
 it will automatically use the 1Password helper to retrieve credentials.
 
