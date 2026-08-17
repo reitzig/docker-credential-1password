@@ -17,7 +17,11 @@ import (
 const appName = "docker-credential-1password"
 const configFilename = "credential-1password.json"
 
-var appVersion = "dev" // goreleaser will inject real value
+var ( // goreleaser will inject real values for these
+	version = "dev"
+	commit  = "HEAD"
+	date    = "now"
+)
 
 type DockerAuth struct {
 	Username string
@@ -130,7 +134,7 @@ func opClient() (*onepassword.Client, error) {
 	// TODO: support OP_SERVICE_ACCOUNT_TOKEN ?
 	return onepassword.NewClient(context.Background(),
 		onepassword.WithDesktopAppIntegration(account),
-		onepassword.WithIntegrationInfo(appName, appVersion),
+		onepassword.WithIntegrationInfo(appName, version),
 	)
 }
 
@@ -251,6 +255,7 @@ func main() {
 			}
 
 			fmt.Println(string(data))
+
 		case "list":
 			names, err := allRegistriesAndUsernames()
 			if err != nil {
@@ -266,15 +271,18 @@ func main() {
 
 			fmt.Println(string(data))
 
+		case "version":
+			fmt.Printf("%s\n\nVersion: %s\nCommit: %s\nDate: %s\n", appName, version, commit, date)
+
 		case "store", "erase":
 			_, _ = fmt.Fprintf(os.Stderr, "Command '%s' not implemented; manage secrets through 1Password\n", command)
 			os.Exit(4)
 		default:
-			_, _ = fmt.Fprintf(os.Stderr, "Unknown command '%s'; use 'get'\n", command)
+			_, _ = fmt.Fprintf(os.Stderr, "Unknown command '%s'; use 'get','list', 'version'\n", command)
 			os.Exit(5)
 		}
 	} else {
-		_, _ = fmt.Fprintf(os.Stderr, "No command given; use 'get'\n")
+		_, _ = fmt.Fprintf(os.Stderr, "No command given; use 'get', 'list', 'version'\n")
 		os.Exit(6)
 	}
 }

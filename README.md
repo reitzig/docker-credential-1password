@@ -122,6 +122,11 @@ it will automatically use the 1Password helper to retrieve credentials.
 >
 > After failing to write using the helper, it will fall back to asking for credentials and storing them on disk.
 
+Confirm the version you are using by running:
+
+```bash
+docker-credential-1password version
+```
 
 ## Alternatives
 
