@@ -7,6 +7,7 @@ CHANGIE_CONFIG_PATH = "{{- config_root -}}/.config/changie.yaml"
 [tools]
 changie = "1"
 cocogitto = '7'
+editorconfig-checker = '3'
 go = '1.26'
 goreleaser = '2'
 golangci-lint = '2'

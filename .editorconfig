@@ -1,0 +1,32 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 120
+tab_width = 4
+
+ij_continuation_indent_size = 8
+ij_visual_guides = 80,100
+ij_wrap_on_typing = false
+
+[{*.json,*.json5,*.jsonc}]
+indent_size = 2
+ij_json_keep_trailing_comma = true
+
+[*.md]
+trim_trailing_whitespace = false
+indent_size = 2
+
+[{*.yaml,*.yml}]
+indent_size = 2
+ij_yaml_indent_sequence_value = false
+ij_yaml_indent_size = 2
+
+[{*.lock,*.log,*.jsonl,go.mod,go.sum}]
+generated_code = true
+ij_formatter_enabled = false

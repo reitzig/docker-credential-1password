@@ -73,6 +73,45 @@ checksum = "sha256:074f68f05d270da5c0d69d3e234ec362bec4c6e3189c21d1c948d03860365
 url = "https://github.com/cocogitto/cocogitto/releases/download/7.0.0/cocogitto-7.0.0-x86_64-pc-windows-msvc.tar.gz"
 url_api = "https://api.github.com/repos/cocogitto/cocogitto/releases/assets/366659399"
 
+[[tools.editorconfig-checker]]
+version = "3.11.1"
+backend = "aqua:editorconfig-checker/editorconfig-checker"
+
+[tools.editorconfig-checker."platforms.linux-arm64"]
+checksum = "sha256:073d5263f0c5953f3e847df44a84403ecc284ab77419de56e280ab92bc082e8d"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v3.11.1/ec-linux-arm64.tar.gz"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/506306098"
+
+[tools.editorconfig-checker."platforms.linux-arm64-musl"]
+checksum = "sha256:073d5263f0c5953f3e847df44a84403ecc284ab77419de56e280ab92bc082e8d"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v3.11.1/ec-linux-arm64.tar.gz"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/506306098"
+
+[tools.editorconfig-checker."platforms.linux-x64"]
+checksum = "sha256:5a37922963248451e88149251e49f6ae08f69717a3918202a51fe9945e19691e"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v3.11.1/ec-linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/506306099"
+
+[tools.editorconfig-checker."platforms.linux-x64-musl"]
+checksum = "sha256:5a37922963248451e88149251e49f6ae08f69717a3918202a51fe9945e19691e"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v3.11.1/ec-linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/506306099"
+
+[tools.editorconfig-checker."platforms.macos-arm64"]
+checksum = "sha256:69205598fe8b26677d31194c5c9fdf7e8be321909ffb3c99efb5c9e4e648583e"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v3.11.1/ec-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/506306097"
+
+[tools.editorconfig-checker."platforms.macos-x64"]
+checksum = "sha256:a9f68961e33d1a3b3f134c403557c8b2bbafb70b21b4c32b5d9245ffc2875f4f"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v3.11.1/ec-darwin-amd64.tar.gz"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/506306114"
+
+[tools.editorconfig-checker."platforms.windows-x64"]
+checksum = "sha256:6f81f034bbaf77d7ea73274aa7d33995baf9e0d91bc4d4caa8eccff4645f870e"
+url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v3.11.1/ec-windows-amd64.zip"
+url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/506306105"
+
 [[tools.go]]
 version = "1.26.5"
 backend = "core:go"

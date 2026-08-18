@@ -1,0 +1,10 @@
+{
+    "exclude": [
+        ".*\\.lock",
+        ".*\\.go",
+        "go\\.(mod|sum)"
+    ],
+    "disable": {
+        "maxLineLength": true
+    }
+}

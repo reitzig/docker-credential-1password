@@ -30,32 +30,32 @@ any other application using any of the 1Passworkd SDKs can (attempt to) connect 
 
 ## Installation
 
-1. Download the latest release from 
-     [GitHub Releases](https://github.com/reitzig/docker-credential-1password/releases).
-   Make sure the binary is executable and in your `PATH`.
+1.  Download the latest release from 
+      [GitHub Releases](https://github.com/reitzig/docker-credential-1password/releases).
+    Make sure the binary is executable and in your `PATH`.
 
-   - As an alternative, you can also clone the repository and run
+    - As an alternative, you can also clone the repository and run
 
-     ```bash
-     go install github.com/reitzig/docker-credential-1password@<version>
-     ```
-2. Now configure `docker` to use the helper for all registries:
+      ```bash
+      go install github.com/reitzig/docker-credential-1password@<version>
+      ```
+2.  Now configure `docker` to use the helper for all registries:
 
-   ```json5
-   // .docker/config.json
-   {
-     "credsStore": "1password",
-     "auths": {}
-   }
-   ```
+    ```json5
+    // .docker/config.json
+    {
+      "credsStore": "1password",
+      "auths": {}
+    }
+    ```
 
-   > [!TIP]
-   > If you need to mix and match 1password with other credential stores, 
-   > please refer to the 
-   >   [official Docker documentation](https://docs.docker.com/reference/cli/docker/login/#configure-credential-helpers)
-   > on how to configure credential _helpers_ instead of a _store_.
+    > [!TIP]
+    > If you need to mix and match 1password with other credential stores, 
+    > please refer to the 
+    >   [official Docker documentation](https://docs.docker.com/reference/cli/docker/login/#configure-credential-helpers)
+    > on how to configure credential _helpers_ instead of a _store_.
 
-3. Finally, configure the 1Password desktop app to integrate with applications that use the SDK by
+3.  Finally, configure the 1Password desktop app to integrate with applications that use the SDK by
 checking 'Settings > Developer > Developer Integrations > Integrate with 1Password SDKs'.
 
 
