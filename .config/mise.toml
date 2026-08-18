@@ -9,8 +9,8 @@ changie = "1"
 cocogitto = '7'
 editorconfig-checker = '3'
 go = '1.26'
-goreleaser = '2'
 golangci-lint = '2'
+goreleaser = '2'
 lefthook = '2'
 
 [tasks.build]

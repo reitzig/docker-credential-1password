@@ -18,12 +18,14 @@ jobs:
     name: Detect Changes # as a workaround for lack of out-of-the-box fine-grained control
     runs-on: 'ubuntu-latest'
     permissions:
+      contents: read
       pull-requests: read
     outputs:
       application: ${{ steps.filter.outputs.application }}
       linter: ${{ steps.filter.outputs.linter }}
       build: ${{ steps.filter.outputs.build }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
         id: filter
         with:
