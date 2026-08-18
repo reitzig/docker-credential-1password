@@ -66,6 +66,11 @@ checking 'Settings > Developer > Developer Integrations > Integrate with 1Passwo
 
 ## Usage
 
+> [!IMPORTANT]
+> Do not run `docker login`!
+>
+> After failing to write using the helper, it will fall back to asking for credentials and storing them on disk.
+
 Next to your `.docker/config.json`, create a file `credential-1password.json` and
 add references to all necessary secrets.
 For example, you would create this for DockerHub:
@@ -105,13 +110,13 @@ Add additional registries to `secretRefs` in a similar fashion.
 >      op vault list --format json
 >      ```
 > 3. Field names may contain section names, i.e. `<section name>/<field name>`.
-> 
-> > [!TIP]
-> > If you use the 'Copy Secret Reference' feature on any item in the desktop app,
-> > you can read off everything you need except for the vault ID:
-> > ```
-> > op://<vault name>/<item name>/<field name>"
-> > ```
+
+> [!TIP]
+> If you use the 'Copy Secret Reference' feature on any item in the desktop app,
+> you can read off everything you need except for the vault ID:
+> ```
+> op://<vault name>/<item name>/<field name>"
+> ```
 
 Run
 ```bash
@@ -121,11 +126,6 @@ to check the configuration.
 
 Now simply run `docker pull` or any other command that requires authentication;
 it will automatically use the 1Password helper to retrieve credentials.
-
-> [!IMPORTANT]
-> Do not run `docker login`!
->
-> After failing to write using the helper, it will fall back to asking for credentials and storing them on disk.
 
 Confirm the version you are using by running:
 
