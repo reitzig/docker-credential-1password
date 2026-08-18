@@ -1,3 +1,8 @@
+[![Go](https://img.shields.io/github/go-mod/go-version/reitzig/docker-credential-1password)](https://go.dev/)
+[![MIT License](https://img.shields.io/github/license/reitzig/docker-credential-1password)](https://github.com/reitzig/docker-credential-1password/blob/main/LICENSE)
+[![GitHub Release](https://img.shields.io/github/v/release/reitzig/docker-credential-1password)](https://github.com/reitzig/docker-credential-1password/releases/latest)
+[![Checks](https://github.com/reitzig/docker-credential-1password/actions/workflows/check.yaml/badge.svg)](https://github.com/reitzig/docker-credential-1password/actions/workflows/check.yaml)
+
 # docker-credential-1password
 
 Use 1Password as read-only credential store for the Docker CLI.
