@@ -21,6 +21,7 @@ jobs:
           changie batch auto
           changie merge
           git status
+          echo "version=$(changie latest)" >> "$GITHUB_OUTPUT"
 
     - name: Commit changelog
       run: |
@@ -30,6 +31,13 @@ jobs:
           git add ".changes/${{ steps.changelog.outputs.version }}.md"
           git commit --all -m "chore(docs): CHANGELOG for ${{ steps.changelog.outputs.version }}"
           git push origin
+
+    - name: Install cross-compiler
+      run: |
+        sudo apt-get update \
+        && sudo apt-get install -y \
+          'gcc-14-aarch64-linux-gnu-base' \
+          'g++-aarch64-linux-gnu'
 
     - name: Run GoReleaser
       run: |
