@@ -37,8 +37,18 @@ jobs:
     - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
 
     - name: Test changelog assembly
+      id: changie_dry_run
       run: |
-        changie next auto
-        changie batch auto
-        changie merge
-        changie latest
+        echo "Next version: $(changie next auto)"
+        changie batch auto && echo "✅ Version changelog assembled"
+        changie merge && echo "✅ Changelog assembled"
+        echo "Prepared version: $(changie latest)"
+        echo "next_version=$(changie latest)" >> "$GITHUB_OUTPUT"
+
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      with:
+        name: docker-credential-1password_changes_${{ github.run_id }}-${{ github.run_attempt }}
+        path: .changes/${{ steps.changie_dry_run.outputs.next_version }}.md
+        if-no-files-found: error
+        archive: false
+        retention-days: 7
