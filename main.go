@@ -10,10 +10,10 @@ import (
 	"strings"
 
 	"github.com/1password/onepassword-sdk-go"
+	"github.com/docker-credential-1password/internal/app"
 	"github.com/docker-credential-1password/internal/config"
+	"github.com/docker-credential-1password/internal/logging"
 )
-
-const appName = "docker-credential-1password"
 
 var ( // goreleaser will inject real values for these
 	version = "dev"
@@ -21,28 +21,9 @@ var ( // goreleaser will inject real values for these
 	date    = "now"
 )
 
-var debugEnvVar = strings.ToUpper(strings.ReplaceAll(appName, "-", "_")) + "_DEBUG"
-
 type DockerAuth struct {
 	Username string
 	Secret   string
-}
-
-func debugEnabled() bool {
-	return os.Getenv(debugEnvVar) != ""
-}
-
-func debugLog(format string, args ...any) {
-	if debugEnabled() {
-		_, _ = fmt.Fprintf(os.Stderr, "debug: "+format+"\n", args...)
-	}
-}
-
-func loadConfig() (config.Config, error) {
-	if debugEnabled() {
-		return config.Load(debugLog)
-	}
-	return config.Load(nil)
 }
 
 func opClient(settings config.Config) (*onepassword.Client, error) {
@@ -50,12 +31,12 @@ func opClient(settings config.Config) (*onepassword.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	debugLog("found account: %s", account)
+	logging.Debug("found account: %s", account)
 
 	// TODO: support OP_SERVICE_ACCOUNT_TOKEN ?
 	return onepassword.NewClient(context.Background(),
 		onepassword.WithDesktopAppIntegration(account),
-		onepassword.WithIntegrationInfo(appName, version),
+		onepassword.WithIntegrationInfo(app.Name, version),
 	)
 }
 
@@ -70,7 +51,7 @@ func authFor(settings config.Config, registry string) (DockerAuth, error) {
 		return DockerAuth{}, err
 	}
 
-	debugLog("will retrieve secrets: %q, %q", opRefs.Username.URI(), opRefs.Secret.URI())
+	logging.Debug("will retrieve secrets: %q, %q", opRefs.Username.URI(), opRefs.Secret.URI())
 	responses, err := client.Secrets().ResolveAll(context.Background(), []string{
 		opRefs.Username.URI(),
 		opRefs.Secret.URI(),
@@ -81,7 +62,7 @@ func authFor(settings config.Config, registry string) (DockerAuth, error) {
 
 	dockerAuth := DockerAuth{}
 	for ref, response := range responses.IndividualResponses {
-		debugLog("checking response for secret reference: %q", ref)
+		logging.Debug("checking response for secret reference: %q", ref)
 		if response.Error != nil {
 			return DockerAuth{}, fmt.Errorf("secret retrieval failed: %v", *response.Error)
 		} else if ref == opRefs.Username.URI() {
@@ -141,7 +122,7 @@ func main() {
 				os.Exit(1)
 			}
 
-			settings, err := loadConfig()
+			settings, err := config.Load()
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "Failed to load configuration: %v\n", err)
 				os.Exit(2)
@@ -162,7 +143,7 @@ func main() {
 			fmt.Println(string(data))
 
 		case "list":
-			settings, err := loadConfig()
+			settings, err := config.Load()
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "Failed to load configuration: %v\n", err)
 				os.Exit(2)
@@ -183,7 +164,7 @@ func main() {
 			fmt.Println(string(data))
 
 		case "version":
-			fmt.Printf("%s\n\nVersion: %s\nCommit: %s\nDate: %s\n", appName, version, commit, date)
+			fmt.Printf("%s\n\nVersion: %s\nCommit: %s\nDate: %s\n", app.Name, version, commit, date)
 
 		case "store", "erase":
 			_, _ = fmt.Fprintf(os.Stderr, "Command '%s' not implemented; manage secrets through 1Password\n", command)

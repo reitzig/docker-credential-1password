@@ -135,7 +135,9 @@ docker-credential-1password version
 
 ### Debugging
 
-In case of any issues, set environment variable `DOCKER_CREDENTIAL_1PASSWORD_DEBUG=1` and re-run.
+In case of any issues, 
+set environment variable `DOCKER_CREDENTIAL_1PASSWORD_DEBUG=true` and 
+re-run to inspect.
 
 ## Alternatives
 

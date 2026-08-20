@@ -7,11 +7,12 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/docker-credential-1password/internal/app"
+	"github.com/docker-credential-1password/internal/logging"
 )
 
-const filename = "credential-1password.json"
-
-type DebugLog func(format string, args ...any)
+var filename = strings.TrimPrefix(app.Name, "docker-") + ".json"
 
 type Config struct {
 	Account    string
@@ -33,7 +34,7 @@ func (r AuthSecretRef) URI() string {
 	return fmt.Sprintf("op://%s/%s/%s", r.Vault, r.Item, r.Field)
 }
 
-func Load(debugLog DebugLog) (Config, error) {
+func Load() (Config, error) {
 	config := Config{}
 	file, err := filePath()
 	if err != nil {
@@ -43,9 +44,7 @@ func Load(debugLog DebugLog) (Config, error) {
 	if exists, err := fileExists(file); err != nil {
 		return config, fmt.Errorf("error accessing config file '%s': %v", file, err)
 	} else if exists {
-		if debugLog != nil {
-			debugLog("found config file: %s", file)
-		}
+		logging.Debug("found config file: %s", file)
 
 		content, err := os.ReadFile(file)
 		if err != nil {
@@ -57,8 +56,9 @@ func Load(debugLog DebugLog) (Config, error) {
 			return config, fmt.Errorf("error parsing config file '%s': %v", file, err)
 		}
 
-		if debugLog != nil {
-			debugLog("found registries in config: %q", config.RegistryNames())
+		if logging.DebugEnabled {
+			registries := config.RegistryNames()
+			logging.Debug("found registries in config: %q", registries)
 		}
 	}
 
