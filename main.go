@@ -114,12 +114,7 @@ func registryMatches(registryURLA string, registryURLB string) bool {
 		strings.TrimPrefix(strings.TrimSuffix(registryURLB, "/"), "https://")
 }
 
-func opRefFor(registry string) (AuthSecretRefs, error) {
-	config, err := readConfig()
-	if err != nil {
-		return AuthSecretRefs{}, err
-	}
-
+func (config Config) opRefFor(registry string) (AuthSecretRefs, error) {
 	for reg, refs := range config.SecretRefs {
 		if registryMatches(reg, registry) {
 			return refs, nil
@@ -130,12 +125,7 @@ func opRefFor(registry string) (AuthSecretRefs, error) {
 	return AuthSecretRefs{}, fmt.Errorf("NYI: ask user for missing refs")
 }
 
-func accountName() (string, error) {
-	config, err := readConfig()
-	if err != nil {
-		return "", err
-	}
-
+func (config Config) accountName() (string, error) {
 	if config.Account == "" {
 		// TODO: ask user for it; store to file
 		return "", fmt.Errorf("NYI: ask user for missing account name")
@@ -145,8 +135,8 @@ func accountName() (string, error) {
 	return config.Account, nil
 }
 
-func opClient() (*onepassword.Client, error) {
-	account, err := accountName()
+func opClient(config Config) (*onepassword.Client, error) {
+	account, err := config.accountName()
 	if err != nil {
 		return nil, err
 	}
@@ -158,13 +148,13 @@ func opClient() (*onepassword.Client, error) {
 	)
 }
 
-func authFor(registry string) (DockerAuth, error) {
-	opRefs, err := opRefFor(registry)
+func authFor(config Config, registry string) (DockerAuth, error) {
+	opRefs, err := config.opRefFor(registry)
 	if err != nil {
 		return DockerAuth{}, err
 	}
 
-	client, err := opClient()
+	client, err := opClient(config)
 	if err != nil {
 		return DockerAuth{}, err
 	}
@@ -198,18 +188,13 @@ func authFor(registry string) (DockerAuth, error) {
 	return dockerAuth, nil
 }
 
-func allRegistriesAndUsernames() (map[string]string, error) {
-	config, err := readConfig()
-	if err != nil {
-		return map[string]string{}, err
-	}
-
+func allRegistriesAndUsernames(config Config) (map[string]string, error) {
 	nameRefs := map[string]string{}
 	for reg, refs := range config.SecretRefs {
 		nameRefs[reg] = refs.Username.asURI()
 	}
 
-	client, err := opClient()
+	client, err := opClient(config)
 	if err != nil {
 		return map[string]string{}, err
 	}
@@ -242,7 +227,7 @@ func fileExists(name string) (bool, error) {
 	return false, err
 }
 
-func readRegistryURL() (string, error) {
+func readInput() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 
 	registryURL, err := reader.ReadString('\n')
@@ -256,37 +241,49 @@ func main() {
 	if len(os.Args) > 1 {
 		switch command := os.Args[1]; command {
 		case "get":
-			registryURL, err := readRegistryURL()
+			registryURL, err := readInput()
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "Failed to read registry URL from stdin: %v\n", err)
 				os.Exit(1)
 			}
 
-			auth, err := authFor(registryURL)
+			config, err := readConfig()
+			if err != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "Failed to load configuration: %v\n", err)
+				os.Exit(2)
+			}
+
+			auth, err := authFor(config, registryURL)
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "Could not retrieve credentials for '%s': %v\n", registryURL, err)
-				os.Exit(2)
+				os.Exit(3)
 			}
 
 			data, err := json.Marshal(auth)
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "Failed to encode auth as JSON: %v\n", err)
-				os.Exit(3)
+				os.Exit(4)
 			}
 
 			fmt.Println(string(data))
 
 		case "list":
-			names, err := allRegistriesAndUsernames()
+			config, err := readConfig()
+			if err != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "Failed to load configuration: %v\n", err)
+				os.Exit(2)
+			}
+
+			names, err := allRegistriesAndUsernames(config)
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "Could not retrieve usernames': %v\n", err)
-				os.Exit(2)
+				os.Exit(3)
 			}
 
 			data, err := json.Marshal(names)
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "Failed to encode usernames as JSON: %v\n", err)
-				os.Exit(3)
+				os.Exit(4)
 			}
 
 			fmt.Println(string(data))
@@ -296,7 +293,7 @@ func main() {
 
 		case "store", "erase":
 			_, _ = fmt.Fprintf(os.Stderr, "Command '%s' not implemented; manage secrets through 1Password\n", command)
-			os.Exit(4)
+			os.Exit(5)
 		default:
 			_, _ = fmt.Fprintf(os.Stderr, "Unknown command '%s'; use 'get','list', 'version'\n", command)
 			os.Exit(5)
