@@ -133,6 +133,10 @@ Confirm the version you are using by running:
 docker-credential-1password version
 ```
 
+### Debugging
+
+In case of any issues, set environment variable `DOCKER_CREDENTIAL_1PASSWORD_DEBUG=1` and re-run.
+
 ## Alternatives
 
 - [xebia/docker-credential-1password](https://github.com/xebia/docker-credential-1password)
@@ -141,4 +145,12 @@ docker-credential-1password version
 
 ## Notes
 
-No maintainer has any affiliation with AgileBits Inc.
+- This program does not collect any data beyond its immediate purpose.
+  It does not store any data outside its single configuration file.
+  It does not transmit any data except through the 1Password SDK.
+  - At the same time, we cannot be held responsible for data processing, storage, and transmission 
+    performed by 1Password SDK. Refer to their privacy policy.
+- "AI" coding assistance was used as noted in the commit messages.
+  The human always remained in the loop.
+- No maintainer has any affiliation with AgileBits Inc.
+  1Password is their trademark.

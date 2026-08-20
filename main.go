@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/1password/onepassword-sdk-go"
@@ -22,6 +23,8 @@ var ( // goreleaser will inject real values for these
 	commit  = "HEAD"
 	date    = "now"
 )
+
+var debugEnvVar = strings.ToUpper(strings.ReplaceAll(appName, "-", "_")) + "_DEBUG"
 
 type DockerAuth struct {
 	Username string
@@ -42,6 +45,16 @@ type AuthSecretRef struct {
 	Vault string
 	Item  string
 	Field string
+}
+
+func debugEnabled() bool {
+	return os.Getenv(debugEnvVar) != ""
+}
+
+func debugLog(format string, args ...any) {
+	if debugEnabled() {
+		_, _ = fmt.Fprintf(os.Stderr, "debug: "+format+"\n", args...)
+	}
 }
 
 func (r AuthSecretRef) asURI() string {
@@ -72,9 +85,8 @@ func readConfig() (Config, error) {
 	if exists, err := fileExists(file); err != nil {
 		return config, fmt.Errorf("error accessing config file '%s': %v", file, err)
 	} else if exists {
-		//fmt.Printf("Found config file: %s\n", file) // TODO remove or log properly
+		debugLog("found config file: %s", file)
 		content, err := os.ReadFile(file)
-		//fmt.Printf("Read config JSON: %s\n", string(content)) // TODO remove or log properly
 		if err != nil {
 			return config, fmt.Errorf("error reading config file '%s': %v", file, err)
 		}
@@ -82,6 +94,15 @@ func readConfig() (Config, error) {
 		err = json.Unmarshal(content, &config)
 		if err != nil {
 			return config, fmt.Errorf("error parsing config file '%s': %v", file, err)
+		}
+
+		if debugEnabled() {
+			registries := make([]string, 0, len(config.SecretRefs))
+			for registry := range config.SecretRefs {
+				registries = append(registries, registry)
+			}
+			sort.Strings(registries)
+			debugLog("found registries in config: %q", registries)
 		}
 	}
 
@@ -114,13 +135,12 @@ func accountName() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	//fmt.Printf("found config: %+v\n", config) // TODO remove or log properly
 
 	if config.Account == "" {
 		// TODO: ask user for it; store to file
 		return "", fmt.Errorf("NYI: ask user for missing account name")
 	}
-	//_, _ = fmt.Printf("found Account: %s\n", config.Account) // TODO remove or log properly
+	debugLog("found account: %s", config.Account)
 
 	return config.Account, nil
 }
@@ -149,7 +169,7 @@ func authFor(registry string) (DockerAuth, error) {
 		return DockerAuth{}, err
 	}
 
-	//fmt.Printf("will retrieve secrets: '%s', '%s'\n", opRefs.Username.asUri(), opRefs.Secret.asUri()) // TODO remove or log properly
+	debugLog("will retrieve secrets: %q, %q", opRefs.Username.asURI(), opRefs.Secret.asURI())
 	responses, err := client.Secrets().ResolveAll(context.Background(), []string{
 		opRefs.Username.asURI(),
 		opRefs.Secret.asURI(),
@@ -160,7 +180,7 @@ func authFor(registry string) (DockerAuth, error) {
 
 	dockerAuth := DockerAuth{}
 	for ref, response := range responses.IndividualResponses {
-		//fmt.Printf("Checking response for: '%s'\n", ref)  // TODO remove or log properly
+		debugLog("checking response for secret reference: %q", ref)
 		if response.Error != nil {
 			return DockerAuth{}, fmt.Errorf("secret retrieval failed: %v", *response.Error)
 		} else if ref == opRefs.Username.asURI() {
