@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"os"
 	"reflect"
 	"testing"
 
@@ -83,6 +84,287 @@ func TestRegistryMatches(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := registryMatches(tt.some, tt.other); got != tt.want {
 				t.Errorf("registryMatches(%s, %s) = %v, want %v", tt.some, tt.other, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConfig_RefsFor(t *testing.T) {
+	type fields struct {
+		Account    string
+		SecretRefs map[string]AuthSecretRefs
+	}
+	type args struct {
+		registry string
+	}
+	targetRefs := AuthSecretRefs{
+		Username: AuthSecretRef{Vault: "abcdef", Item: "My Hub", Field: "username"},
+		Secret:   AuthSecretRef{Vault: "abcdef", Item: "My Registry", Field: "password"},
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    AuthSecretRefs
+		wantErr bool
+	}{
+		{
+			name: "registry configured",
+			fields: fields{
+				Account: "irrelevant",
+				SecretRefs: map[string]AuthSecretRefs{
+					"https://some.registry.com":  {},
+					"https://my.registry.org":    targetRefs,
+					"https://other.registry.com": {},
+				},
+			},
+			args:    args{registry: "my.registry.org"},
+			want:    targetRefs,
+			wantErr: false,
+		},
+		{
+			name: "registry missing",
+			fields: fields{
+				Account: "irrelevant",
+				SecretRefs: map[string]AuthSecretRefs{
+					"https://some.registry.com":  {},
+					"https://other.registry.com": {},
+				},
+			},
+			args:    args{registry: "my.registry.org"},
+			want:    AuthSecretRefs{},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				Account:    tt.fields.Account,
+				SecretRefs: tt.fields.SecretRefs,
+			}
+			got, err := config.RefsFor(tt.args.registry)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("RefsFor() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("RefsFor() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_filePath(t *testing.T) {
+	tests := []struct {
+		name            string
+		envHome         *string
+		envDockerConfig *string
+		want            string
+		wantErr         bool
+	}{
+		{
+			name:            "default",
+			envHome:         new("/home/peon"),
+			envDockerConfig: nil,
+			want:            "/home/peon/.docker/credential-1password.json",
+			wantErr:         false,
+		},
+		{
+			name:            "custom docker config dir",
+			envHome:         new("/home/peon"),
+			envDockerConfig: new("/tmp/foo"),
+			want:            "/tmp/foo/credential-1password.json",
+			wantErr:         false,
+		},
+		{
+			name:            "blank custom dir",
+			envHome:         new("/home/peon"),
+			envDockerConfig: new(""),
+			want:            "/home/peon/.docker/credential-1password.json",
+			wantErr:         false,
+		},
+		{
+			name:            "no config dir, no home",
+			envHome:         nil,
+			envDockerConfig: nil,
+			want:            "",
+			wantErr:         true,
+		},
+	}
+
+	previousHome := os.Getenv("HOME")
+	defer os.Setenv("HOME", previousHome)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.envHome != nil {
+				_ = os.Setenv("HOME", *tt.envHome)
+			} else {
+				_ = os.Unsetenv("HOME")
+			}
+			if tt.envDockerConfig != nil {
+				_ = os.Setenv("DOCKER_CONFIG", *tt.envDockerConfig)
+			} else {
+				_ = os.Unsetenv("DOCKER_CONFIG")
+			}
+
+			got, err := filePath()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("filePath() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("filePath() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConfig_UsernameRefs(t *testing.T) {
+	type fields struct {
+		Account    string
+		SecretRefs map[string]AuthSecretRefs
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   map[string]string
+	}{
+		{
+			name: "some registries configured",
+			fields: fields{
+				Account: "irrelevant",
+				SecretRefs: map[string]AuthSecretRefs{
+					"https://some.registry.com": {
+						Username: AuthSecretRef{Vault: "abcdef", Item: "Some Hub", Field: "uid"},
+						Secret:   AuthSecretRef{},
+					},
+					"https://my.registry.org": {
+						Username: AuthSecretRef{Vault: "abcdef", Item: "My Hub", Field: "username"},
+						Secret:   AuthSecretRef{},
+					},
+				},
+			},
+			want: map[string]string{
+				"https://some.registry.com": "op://abcdef/Some Hub/uid",
+				"https://my.registry.org":   "op://abcdef/My Hub/username",
+			},
+		},
+		{
+			name: "no registries configured",
+			fields: fields{
+				Account:    "irrelevant",
+				SecretRefs: map[string]AuthSecretRefs{},
+			},
+			want: map[string]string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				Account:    tt.fields.Account,
+				SecretRefs: tt.fields.SecretRefs,
+			}
+			if got := config.UsernameRefs(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("UsernameRefs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConfig_RegistryNames(t *testing.T) {
+	type fields struct {
+		Account    string
+		SecretRefs map[string]AuthSecretRefs
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []string
+	}{
+		{
+			name: "some registries configured",
+			fields: fields{
+				Account: "irrelevant",
+				SecretRefs: map[string]AuthSecretRefs{
+					"https://some.registry.com": {
+						Username: AuthSecretRef{Vault: "abcdef", Item: "Some Hub", Field: "uid"},
+						Secret:   AuthSecretRef{},
+					},
+					"https://my.registry.org": {
+						Username: AuthSecretRef{Vault: "abcdef", Item: "My Hub", Field: "username"},
+						Secret:   AuthSecretRef{},
+					},
+				},
+			},
+			want: []string{
+				"https://my.registry.org",
+				"https://some.registry.com",
+			},
+		},
+		{
+			name: "no registries configured",
+			fields: fields{
+				Account:    "irrelevant",
+				SecretRefs: map[string]AuthSecretRefs{},
+			},
+			want: []string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				Account:    tt.fields.Account,
+				SecretRefs: tt.fields.SecretRefs,
+			}
+			if got := config.RegistryNames(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("RegistryNames() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConfig_AccountName(t *testing.T) {
+	type fields struct {
+		Account    string
+		SecretRefs map[string]AuthSecretRefs
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "config set up",
+			fields: fields{
+				Account:    "irrelevant",
+				SecretRefs: map[string]AuthSecretRefs{},
+			},
+			want:    "irrelevant",
+			wantErr: false,
+		},
+		{
+			name:    "config empty",
+			fields:  fields{},
+			want:    "",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				Account:    tt.fields.Account,
+				SecretRefs: tt.fields.SecretRefs,
+			}
+			got, err := config.AccountName()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("AccountName() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("AccountName() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

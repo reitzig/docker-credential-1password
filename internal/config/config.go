@@ -105,7 +105,7 @@ func filePath() (string, error) {
 	homeDir, homeSet := os.LookupEnv("HOME")
 	customDir, customSet := os.LookupEnv("DOCKER_CONFIG")
 
-	if customSet {
+	if customSet && customDir != "" {
 		return filepath.Join(customDir, filename), nil
 	} else if homeSet {
 		return filepath.Join(homeDir, ".docker", filename), nil

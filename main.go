@@ -18,21 +18,21 @@ type DockerAuth struct {
 	Secret   string
 }
 
-func readInput() (string, error) {
+func readInputLine() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 
-	registryURL, err := reader.ReadString('\n')
+	line, err := reader.ReadString('\n')
 	if err != nil && err != io.EOF {
 		return "", err
 	}
-	return strings.TrimSpace(registryURL), nil
+	return strings.TrimSpace(line), nil
 }
 
 func main() {
 	if len(os.Args) > 1 {
 		switch command := os.Args[1]; command {
 		case "get":
-			registryURL, err := readInput()
+			registryURL, err := readInputLine()
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "Failed to read registry URL from stdin: %v\n", err)
 				os.Exit(1)
