@@ -20,7 +20,11 @@ type RegistriesAndUsernames map[string]string
 
 type OpClient struct {
 	config    config.Config
-	sdkClient *onepassword.Client // TODO: interface? -> unit test
+	sdkClient sdkClient
+}
+
+type sdkClient interface {
+	Secrets() onepassword.SecretsAPI
 }
 
 func Client(settings config.Config) (*OpClient, error) {
