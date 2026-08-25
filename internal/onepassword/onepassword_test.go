@@ -15,14 +15,14 @@ type testClient struct {
 }
 
 func (t *testClient) Secrets() onepassword.SecretsAPI {
-	return testSecretsApi{secrets: t.secrets}
+	return testSecretsAPI{secrets: t.secrets}
 }
 
-type testSecretsApi struct {
+type testSecretsAPI struct {
 	secrets map[config.AuthSecretRef]string
 }
 
-func (t testSecretsApi) lookup(secretReference string) (struct {
+func (t testSecretsAPI) lookup(secretReference string) (struct {
 	config.AuthSecretRef
 	string
 }, error) {
@@ -40,13 +40,13 @@ func (t testSecretsApi) lookup(secretReference string) (struct {
 	}{}, errors.New("secret not found")
 }
 
-func (t testSecretsApi) Resolve(_ context.Context, secretReference string) (string, error) {
+func (t testSecretsAPI) Resolve(_ context.Context, secretReference string) (string, error) {
 	result, err := t.lookup(secretReference)
 	//goland:noinspection GoDfaErrorMayBeNotNil
 	return result.string, err
 }
 
-func (t testSecretsApi) ResolveAll(_ context.Context, secretReferences []string) (onepassword.ResolveAllResponse, error) {
+func (t testSecretsAPI) ResolveAll(_ context.Context, secretReferences []string) (onepassword.ResolveAllResponse, error) {
 	responses := make(map[string]onepassword.Response[onepassword.ResolvedReference, onepassword.ResolveReferenceError], len(secretReferences))
 
 	for _, ref := range secretReferences {
@@ -60,8 +60,8 @@ func (t testSecretsApi) ResolveAll(_ context.Context, secretReferences []string)
 			responses[ref] = onepassword.Response[onepassword.ResolvedReference, onepassword.ResolveReferenceError]{
 				Content: &onepassword.ResolvedReference{
 					Secret:  result.string,
-					ItemID:  result.AuthSecretRef.Item,
-					VaultID: result.AuthSecretRef.Vault,
+					ItemID:  result.Item,
+					VaultID: result.Vault,
 				},
 				Error: nil,
 			}

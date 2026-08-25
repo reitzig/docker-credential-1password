@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -194,7 +195,12 @@ func Test_filePath(t *testing.T) {
 	}
 
 	previousHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", previousHome)
+	defer func(key, value string) {
+		err := os.Setenv(key, value)
+		if err != nil {
+			fmt.Println("Resetting HOME environment variable failed")
+		}
+	}("HOME", previousHome)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
