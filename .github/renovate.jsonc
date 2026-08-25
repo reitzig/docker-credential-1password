@@ -10,6 +10,9 @@
   "lockFileMaintenance": {
     "enabled": true
   },
+  "mise": {
+    "rangeStrategy": "update-lockfile"
+  },
   "minimumReleaseAge": "3d",
   "packageRules": [
     {
