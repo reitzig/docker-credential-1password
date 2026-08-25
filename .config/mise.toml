@@ -19,13 +19,24 @@ run = "goreleaser build --snapshot --clean --single-target"
 [tasks.build-all]
 run = "goreleaser build --snapshot --clean"
 
+[tasks.lint-go]
+sources = ["**/*.go", ".golangci.toml", "go.*"]
+outputs = { auto = true }
+run = "golangci-lint run"
+
+[tasks.check-goreleaser]
+sources = [".config/goreleaser.yaml"]
+outputs = { auto = true }
+run = "goreleaser check"
+
+[tasks.editorconfig]
+run = "ec --config .config/editorconfig-checker.json"
+
+[tasks.check-git-history]
+run = "cog --config .config/cog.toml check"
+
 [tasks.lint]
-run = [
-    "golangci-lint run",
-    "goreleaser check",
-    "ec --config .config/editorconfig-checker.json",
-    "cog --config .config/cog.toml check",
-]
+depends = ["lint-go", "check-goreleaser", "editorconfig", "check-git-history"]
 
 [tasks.test]
 run = "go test -cover ./..."
