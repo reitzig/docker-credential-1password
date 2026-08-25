@@ -46,7 +46,7 @@ func main() {
 
 			client, err := onepassword.Client(settings)
 			if err != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "Failed to set up 1Password client: %v\n", err)
+				_, _ = fmt.Fprintf(os.Stderr, "Failed to set up 1Password SDK client: %v\n", err)
 				os.Exit(3)
 			}
 
@@ -73,7 +73,7 @@ func main() {
 
 			client, err := onepassword.Client(settings)
 			if err != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "Failed to set up 1Password client: %v\n", err)
+				_, _ = fmt.Fprintf(os.Stderr, "Failed to set up 1Password SDK client: %v\n", err)
 				os.Exit(3)
 			}
 

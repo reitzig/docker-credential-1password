@@ -14,6 +14,8 @@ import (
 
 var filename = strings.TrimPrefix(app.Name, "docker-") + ".json"
 
+var loadedConfig string
+
 type Config struct {
 	Account    string
 	SecretRefs map[string]AuthSecretRefs
@@ -57,17 +59,26 @@ func Load() (Config, error) {
 		}
 
 		if logging.DebugEnabled {
+			if account := config.Account; account != "" {
+				logging.Debug("found account ID in config: '%s'", account)
+			} else {
+				logging.Debug("no account ID in config")
+			}
 			registries := config.RegistryNames()
 			logging.Debug("found registries in config: %q", registries)
 		}
+	} else {
+		logging.Debug("no config file found; proceeding with empty values")
 	}
 
+	loadedConfig = file // even if it doesn't exist, this _is_ where we're looking!
 	return config, nil
 }
 
 func (config Config) AccountName() (string, error) {
 	if config.Account == "" {
-		return "", fmt.Errorf("NYI: ask user for missing account name")
+		// TODO: implement fallback to (interactively) determine the account name
+		return "", fmt.Errorf("no account ID found in config '%s'", loadedConfig)
 	}
 
 	return config.Account, nil
@@ -97,7 +108,8 @@ func (config Config) RefsFor(registry string) (AuthSecretRefs, error) {
 		}
 	}
 
-	return AuthSecretRefs{}, fmt.Errorf("NYI: ask user for missing refs")
+	// TODO: implement fallback to (interactively) determine references
+	return AuthSecretRefs{}, fmt.Errorf("registry '%s' not found in config '%s'", registry, loadedConfig)
 }
 
 // As per https://docs.docker.com/reference/cli/docker/#configuration-files

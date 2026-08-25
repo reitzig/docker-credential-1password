@@ -32,7 +32,6 @@ func Client(settings config.Config) (*OpClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	logging.Debug("found account: %s", account)
 
 	sdkClient, err := onepassword.NewClient(context.Background(),
 		onepassword.WithDesktopAppIntegration(account),
