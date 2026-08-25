@@ -1,3 +1,0 @@
-kind: Added
-body: Debug logging to stderr (opt-in via env var)
-time: 2026-08-20T13:57:02.223385377+02:00
