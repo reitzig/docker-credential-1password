@@ -53,16 +53,14 @@ any other application using any of the 1Passworkd SDKs can (attempt to) connect 
       "auths": {}
     }
     ```
-
-    > [!TIP]
-    > If you need to mix and match 1password with other credential stores, 
-    > please refer to the 
-    >   [official Docker documentation](https://docs.docker.com/reference/cli/docker/login/#configure-credential-helpers)
-    > on how to configure credential _helpers_ instead of a _store_.
-
 3.  Finally, configure the 1Password desktop app to integrate with applications that use the SDK by
 checking 'Settings > Developer > Developer Integrations > Integrate with 1Password SDKs'.
 
+> [!TIP]
+> If you need to mix and match 1password with other credential stores, 
+> please refer to the 
+>   [official Docker documentation](https://docs.docker.com/reference/cli/docker/login/#configure-credential-helpers)
+> on how to configure credential _helpers_ instead of a _store_.
 
 ## Usage
 
