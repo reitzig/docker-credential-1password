@@ -11,6 +11,7 @@ post-checkout:
       priority: 2
       glob: "go.*"
       run: go mod tidy
+
 pre-commit:
   piped: true
   commands:
@@ -22,10 +23,13 @@ pre-commit:
     linter:
       priority: 2
       glob: "*.go"
+      # NB: go linter takes only files from a single directory
+      #     s.a. https://github.com/evilmartians/lefthook/discussions/631
       run: golangci-lint run .
     editorconfig:
       priority: 2
-      run: ec --config .config/editorconfig-checker.json
+      run: ec --config .config/editorconfig-checker.json {staged_files}
+
 commit-msg:
   skip:
     - ref: "wip/*"

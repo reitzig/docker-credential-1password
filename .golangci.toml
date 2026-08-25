@@ -10,9 +10,12 @@ enable = [
 
 [linters.exclusions]
 presets = [
-  'comments'
+  'comments',
 #  'common-false-positives',
 #  'legacy',
 #  'std-error-handling'
 ]
 
+[output]
+show-stats = true
+sort-results = true

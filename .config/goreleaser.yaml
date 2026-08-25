@@ -1,8 +1,3 @@
-# This is an example .goreleaser.yml file with some sensible defaults.
-# Make sure to check the documentation at https://goreleaser.com
-
-# The lines below are called `modelines`. See `:help modeline`
-# Feel free to remove those if you don't want/need to use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
@@ -28,12 +23,12 @@ builds:
           - CC="aarch64-linux-gnu-gcc"
           - CXX="aarch64-linux-gnu-g++"
     ldflags:
-    - -s
-    - -w
-    - -X 'github.com/{{.ProjectName}}/internal/app.Version={{.Version}}'
-    - -X 'github.com/{{.ProjectName}}/internal/app.Commit={{.Commit}}'
-    - -X 'github.com/{{.ProjectName}}/internal/app.Date={{.Date}}'
-    - -X 'github.com/{{.ProjectName}}/internal/app.BuiltBy=goreleaser'
+      - -s
+      - -w
+      - -X 'github.com/{{.ProjectName}}/internal/app.Version={{.Version}}'
+      - -X 'github.com/{{.ProjectName}}/internal/app.Commit={{.Commit}}'
+      - -X 'github.com/{{.ProjectName}}/internal/app.Date={{.Date}}'
+      - -X 'github.com/{{.ProjectName}}/internal/app.BuiltBy=goreleaser'
 
 archives:
   - formats: [tar.gz]
