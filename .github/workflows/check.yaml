@@ -74,6 +74,7 @@ jobs:
 
     - name: Unit Tests
       run: go test -cover ./...
+      # TODO: Report coverage so that it's visible on PRs
 
 
   validate-goreleaser:

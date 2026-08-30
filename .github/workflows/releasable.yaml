@@ -10,7 +10,37 @@ on:
     - labeled
 
 jobs:
+  unambiguous-next-version:
+    name: Unambiguous next version
+    runs-on: 'ubuntu-latest'
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        ref: ${{ github.event.pull_request.head.sha }} # here, we're not interested in the merge commit
+        fetch-depth: '0'
+    - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+
+    - name: Confirm consistency of changelog and commit history
+      run: |
+        if [[ "$(ls .changes/unreleased/ | wc -l)" -eq 0 ]]; then
+          echo "ℹ️ No recorded changes so far, so we'll be looking at a maintenance release"
+          changie_next_version="$(changie next patch)"
+        else
+          changie_next_version="$(changie next auto)"
+        fi
+        cog_next_version="$(cog --config .config/cog.toml bump --dry-run --auto --skip-untracked)"
+        echo "Changelog suggests version: ${changie_next_version}"
+        echo "Commits suggest version:    ${cog_next_version}"
+        {
+          [[ "${cog_next_version}" == "${changie_next_version}" ]] \
+            && echo "✅ Matches!";
+        } || {
+            echo "❌ Mismatch! Check your change types and commit messages!";
+            exit 1;
+        }
+
   contains-change-notes:
+    name: Contains change notes
     if: ${{ ! contains(github.event.pull_request.labels.*.name, 'no changelog') }}
     runs-on: 'ubuntu-latest'
     permissions:

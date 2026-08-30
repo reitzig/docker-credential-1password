@@ -3,6 +3,10 @@ name: Trigger Release
 on:
   workflow_dispatch:
 
+# TODO: add variable/argument to trigger a maintenance release
+#       -> create a suitable changie entry
+#       -> override release description?
+
 jobs:
   trigger-release:
     runs-on: 'ubuntu-latest'
