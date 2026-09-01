@@ -46,7 +46,7 @@ any other application using any of the 1Passworkd SDKs can (attempt to) connect 
       ```
 2.  Now configure `docker` to use the helper for all registries:
 
-    ```json5
+    ```jsonc
     // .docker/config.json
     {
       "credsStore": "1password",
@@ -62,6 +62,26 @@ checking 'Settings > Developer > Developer Integrations > Integrate with 1Passwo
 >   [official Docker documentation](https://docs.docker.com/reference/cli/docker/login/#configure-credential-helpers)
 > on how to configure credential _helpers_ instead of a _store_.
 
+### podman
+
+`podman` (and related commands) can make use Docker credential helpers (cf. 
+  [containers/image:docs/containers-auth.json.5.md](https://github.com/containers/image/blob/main/docs/containers-auth.json.5.md),
+via 
+  [docs.podman.io > login](https://docs.podman.io/en/latest/markdown/podman-login.1.html)).
+You may have to create a separate config file:
+
+```jsonc
+// .config/containers/auth.json
+{
+  "credHelpers": {
+    "docker.io": "1password"
+  }
+}
+```
+
+No catch-all setting like `credsStore` seems to exist;
+you will have to add each registry individually.
+
 ## Usage
 
 > [!IMPORTANT]
@@ -73,7 +93,7 @@ Next to your `.docker/config.json`, create a file `credential-1password.json` an
 add references to all necessary secrets.
 For example, you would create this for DockerHub:
 
-```json5
+```jsonc
 {
   "account": "<account name or uuid>", // (1)
   "secretRefs": {
