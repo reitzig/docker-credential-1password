@@ -1,6 +1,6 @@
 module github.com/docker-credential-1password
 
-go 1.26.5
+go 1.27
 
 require github.com/1password/onepassword-sdk-go v0.4.1
 
