@@ -44,23 +44,34 @@ any other application using any of the 1Passworkd SDKs can (attempt to) connect 
       ```bash
       go install github.com/reitzig/docker-credential-1password@<version>
       ```
-2.  Now configure `docker` to use the helper for all registries:
+2.  Now configure `docker` to use the helper for those registries 
+    for which you require authentication;
+    for instance, you can start with DockerHub:
 
     ```jsonc
     // .docker/config.json
     {
-      "credsStore": "1password",
-      "auths": {}
+      "auths": {},
+      "credHelpers": {
+        "https://index.docker.io/v1/": "1password"
+      }
     }
     ```
 3.  Finally, configure the 1Password desktop app to integrate with applications that use the SDK by
 checking 'Settings > Developer > Developer Integrations > Integrate with 1Password SDKs'.
 
 > [!TIP]
-> If you need to mix and match 1password with other credential stores, 
-> please refer to the 
->   [official Docker documentation](https://docs.docker.com/reference/cli/docker/login/#configure-credential-helpers)
-> on how to configure credential _helpers_ instead of a _store_.
+> If you do not need other credential stores _and_
+> never access any registries without authentication,
+> you can avoid listing all registries by configuring a credentials _store_ instead:
+>
+> ```jsonc
+> // .docker/config.json
+> {
+>   "credsStore": "1password",
+>   "auths": {}
+> }
+> ```
 
 ### podman
 
@@ -79,8 +90,11 @@ You may have to create a separate config file:
 }
 ```
 
-No catch-all setting like `credsStore` seems to exist;
-you will have to add each registry individually.
+Note how `podman` refers to DockerHub in a different way compared to `docker`;
+this will have to be reflected in your `credential-1password.json` as well (see below).
+
+> [!NOTE]
+> No catch-all setting like `credsStore` seems to exist here.
 
 ## Usage
 
