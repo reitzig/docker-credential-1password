@@ -12,6 +12,8 @@ jobs:
     runs-on: 'ubuntu-latest'
     permissions:
       contents: write
+    env:
+      GOMODCACHE: /tmp/go-pkg-mod
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       with:
@@ -36,12 +38,12 @@ jobs:
           git commit --all -m "chore(docs): CHANGELOG for ${{ steps.changelog.outputs.version }}"
           git push origin
 
-    - name: Install cross-compiler
-      run: |
-        sudo apt-get update \
-        && sudo apt-get install -y \
-          'gcc-14-aarch64-linux-gnu-base' \
-          'g++-aarch64-linux-gnu'
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: ${{ env.GOMODCACHE }}
+        key: ${{ runner.os }}-gopkgmod-${{ hashFiles('go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-gopkgmod-
 
     - name: Run GoReleaser
       run: |

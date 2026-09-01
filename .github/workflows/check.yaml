@@ -54,9 +54,18 @@ jobs:
 
   lint:
     runs-on: 'ubuntu-latest'
+    env:
+      GOMODCACHE: /tmp/go-pkg-mod
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
     - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: ${{ env.GOMODCACHE }}
+        key: ${{ runner.os }}-gopkgmod-${{ hashFiles('go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-gopkgmod-
 
     - name: golangci-lint
       run: golangci-lint run
@@ -68,9 +77,18 @@ jobs:
     runs-on: 'ubuntu-latest'
     needs: changes
     if: ${{ needs.changes.outputs.application == 'true' }}
+    env:
+      GOMODCACHE: /tmp/go-pkg-mod
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
     - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: ${{ env.GOMODCACHE }}
+        key: ${{ runner.os }}-gopkgmod-${{ hashFiles('go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-gopkgmod-
 
     - name: Unit Tests
       run: go test -cover ./...
@@ -82,11 +100,20 @@ jobs:
     runs-on: 'ubuntu-latest'
     needs: changes
     if: ${{ needs.changes.outputs.build == 'true' }}
+    env:
+      GOMODCACHE: /tmp/go-pkg-mod
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
       - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ env.GOMODCACHE }}
+          key: ${{ runner.os }}-gopkgmod-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gopkgmod-
 
       - name: Validate config
         run: goreleaser check
