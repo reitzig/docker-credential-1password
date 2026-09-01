@@ -102,14 +102,36 @@ func (config Config) UsernameRefs() map[string]string {
 }
 
 func (config Config) RefsFor(registry string) (AuthSecretRefs, error) {
+	logging.Debug("looking up credential references for '%s'", registry)
+	var result AuthSecretRefs
+	bestMatch := ""
+	normalizedRegistry := normalizeRegistry(registry)
+
 	for configuredRegistry, refs := range config.SecretRefs {
-		if registryMatches(configuredRegistry, registry) {
-			return refs, nil
+		candidate := normalizeRegistry(configuredRegistry)
+		if strings.Contains(normalizedRegistry, candidate) && len(candidate) > len(bestMatch) {
+			bestMatch = candidate
+			result = refs
 		}
+	}
+
+	if bestMatch != "" {
+		logging.Debug("determined configured registry '%s' as best match for requested '%s'", bestMatch, normalizedRegistry)
+		return result, nil
 	}
 
 	// TODO: implement fallback to (interactively) determine references
 	return AuthSecretRefs{}, fmt.Errorf("registry '%s' not found in config '%s'", registry, loadedConfig)
+}
+
+func normalizeRegistry(registryURL string) string {
+	registryURL = strings.TrimSpace(registryURL)
+
+	if _, registry, hasProtocol := strings.Cut(registryURL, "://"); hasProtocol {
+		registryURL = registry
+	}
+
+	return strings.TrimRight(registryURL, "/")
 }
 
 // As per https://docs.docker.com/reference/cli/docker/#configuration-files
@@ -135,9 +157,4 @@ func fileExists(name string) (bool, error) {
 		return false, nil
 	}
 	return false, err
-}
-
-func registryMatches(registryURLA string, registryURLB string) bool {
-	return strings.TrimPrefix(strings.TrimSuffix(registryURLA, "/"), "https://") ==
-		strings.TrimPrefix(strings.TrimSuffix(registryURLB, "/"), "https://")
 }

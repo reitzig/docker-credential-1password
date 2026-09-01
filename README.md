@@ -111,11 +111,11 @@ For example, you would create this for DockerHub:
 {
   "account": "<account name or uuid>", // (1)
   "secretRefs": {
-    "https://index.docker.io/v1": {
+    "index.docker.io/v1": { // (2)
       "username": {
-        "vault": "<vault id>", // (2)
+        "vault": "<vault id>", // (3)
         "item": "<item id or name>",
-        "field": "<field id or name>" // (3)
+        "field": "<field id or name>" // (4)
       },
       "secret": {
         "vault": "<vault id>",
@@ -134,14 +134,18 @@ Add additional registries to `secretRefs` in a similar fashion.
 >    ```bash
 >    op account list --format json
 >    ```
-> 2. You _have_ to use the vault ID here; the name doesn't work.
+> 2. While the exact URL that `docker` asks for certainly works, there are drawbacks;
+>    for instance, `podman` may send a different URL for the same image!
+>    You can use substrings, e.g. `docker.io` for DockerHub;
+>    the most specific match will be used.
+> 3. You _have_ to use the vault ID here; the name doesn't work.
 >    You can determine it by
 >    - right-clicking on the vault name in the sidebar of the desktop app, or
 >    - by running
 >      ```bash
 >      op vault list --format json
 >      ```
-> 3. Field names may contain section names, i.e. `<section name>/<field name>`.
+> 4. Field names may contain section names, i.e. `<section name>/<field name>`.
 
 > [!TIP]
 > If you use the 'Copy Secret Reference' feature on any item in the desktop app,

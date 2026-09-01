@@ -43,53 +43,6 @@ func TestAuthSecretRefsURI(t *testing.T) {
 	}
 }
 
-func TestRegistryMatches(t *testing.T) {
-	tests := []struct {
-		name  string
-		some  string
-		other string
-		want  bool
-	}{
-		{
-			name:  "exact match",
-			some:  "https://index.docker.io/v1",
-			other: "https://index.docker.io/v1",
-			want:  true,
-		},
-		{
-			name:  "other path",
-			some:  "https://index.docker.io/v1",
-			other: "https://index.docker.io/v2",
-			want:  false,
-		},
-		{
-			name:  "trailing slash",
-			some:  "https://index.docker.io/v1",
-			other: "https://index.docker.io/v1/",
-			want:  true,
-		},
-		{
-			name:  "no protocol",
-			some:  "https://index.docker.io/v1",
-			other: "index.docker.io/v1",
-			want:  true,
-		},
-		{
-			name:  "other port",
-			some:  "gitlab.some.org:4567",
-			other: "gitlab.some.org:4568",
-			want:  false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := registryMatches(tt.some, tt.other); got != tt.want {
-				t.Errorf("registryMatches(%s, %s) = %v, want %v", tt.some, tt.other, got, tt.want)
-			}
-		})
-	}
-}
-
 func TestConfig_RefsFor(t *testing.T) {
 	type fields struct {
 		Account    string
@@ -110,7 +63,21 @@ func TestConfig_RefsFor(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "registry configured",
+			name: "exact match configured",
+			fields: fields{
+				Account: "irrelevant",
+				SecretRefs: map[string]AuthSecretRefs{
+					"https://some.registry.com":  {},
+					"https://my.registry.org":    targetRefs,
+					"https://other.registry.com": {},
+				},
+			},
+			args:    args{registry: "https://my.registry.org"},
+			want:    targetRefs,
+			wantErr: false,
+		},
+		{
+			name: "exact match up to protocol configured",
 			fields: fields{
 				Account: "irrelevant",
 				SecretRefs: map[string]AuthSecretRefs{
@@ -120,6 +87,65 @@ func TestConfig_RefsFor(t *testing.T) {
 				},
 			},
 			args:    args{registry: "my.registry.org"},
+			want:    targetRefs,
+			wantErr: false,
+		},
+		{
+			name: "match up to path configured",
+			fields: fields{
+				Account: "irrelevant",
+				SecretRefs: map[string]AuthSecretRefs{
+					"some.registry.com":  {},
+					"my.registry.org":    targetRefs,
+					"other.registry.com": {},
+				},
+			},
+			args:    args{registry: "https://my.registry.org/v1"},
+			want:    targetRefs,
+			wantErr: false,
+		},
+		{
+			name: "match up to subdomain configured",
+			fields: fields{
+				Account: "irrelevant",
+				SecretRefs: map[string]AuthSecretRefs{
+					"some.registry.com":  {},
+					"my.registry.org":    targetRefs,
+					"other.registry.com": {},
+				},
+			},
+			args:    args{registry: "https://special.my.registry.org"},
+			want:    targetRefs,
+			wantErr: false,
+		},
+		{
+			name: "match up to port configured",
+			fields: fields{
+				Account: "irrelevant",
+				SecretRefs: map[string]AuthSecretRefs{
+					"some.registry.com":  {},
+					"my.registry.org":    targetRefs,
+					"other.registry.com": {},
+				},
+			},
+			args:    args{registry: "my.registry.org:4567"},
+			want:    targetRefs,
+			wantErr: false,
+		},
+		{
+			name: "multiple potential matches configured",
+			fields: fields{
+				Account: "irrelevant",
+				SecretRefs: map[string]AuthSecretRefs{
+					"some.registry.com":          {},
+					"my.registry.org":            {},
+					"special.my.registry.org/v1": {},
+					"my.registry.org/v1":         targetRefs,
+					"registry.org":               {},
+					"other.registry.com":         {},
+				},
+			},
+			args:    args{registry: "https://my.registry.org/v1/"},
 			want:    targetRefs,
 			wantErr: false,
 		},
@@ -371,6 +397,74 @@ func TestConfig_AccountName(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("AccountName() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_normalizeRegistry(t *testing.T) {
+	type args struct {
+		registryURL string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "already normalized",
+			args: args{
+				registryURL: "some.registry.com",
+			},
+			want: "some.registry.com",
+		},
+		{
+			name: "complicated but normalized",
+			args: args{
+				registryURL: "some.registry.com:4567/v1",
+			},
+			want: "some.registry.com:4567/v1",
+		},
+		{
+			name: "spurious protocol",
+			args: args{
+				registryURL: "https://some.registry.com",
+			},
+			want: "some.registry.com",
+		},
+		{
+			name: "other spurious protocol",
+			args: args{
+				registryURL: "oci://some.registry.com",
+			},
+			want: "some.registry.com",
+		},
+		{
+			name: "spurious trailing slash",
+			args: args{
+				registryURL: "some.registry.com/",
+			},
+			want: "some.registry.com",
+		},
+		{
+			name: "spurious whitespace",
+			args: args{
+				registryURL: " some.registry.com/ ",
+			},
+			want: "some.registry.com",
+		},
+		{
+			name: "spurious everything",
+			args: args{
+				registryURL: "http://some.registry.com// ",
+			},
+			want: "some.registry.com",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := normalizeRegistry(tt.args.registryURL); got != tt.want {
+				t.Errorf("normalizeRegistry() = %v, want %v", got, tt.want)
 			}
 		})
 	}
