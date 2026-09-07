@@ -47,7 +47,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }} # here, we're not interested in the merge commit
           fetch-depth: '0'
-      - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
 
       - name: cog check
         run: cog --config .config/cog.toml check
@@ -58,7 +58,7 @@ jobs:
       GOMODCACHE: /tmp/go-pkg-mod
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-    - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+    - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
 
     - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
@@ -81,7 +81,7 @@ jobs:
       GOMODCACHE: /tmp/go-pkg-mod
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-    - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+    - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
 
     - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
@@ -106,7 +106,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-      - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
 
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
