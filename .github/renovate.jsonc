@@ -26,7 +26,7 @@
       ],
       "groupName": "patches",
       "automerge": true,
-      "automergeType": "branch"
+      "automergeType": "pr"
     },
     {
       "matchUpdateTypes": [
