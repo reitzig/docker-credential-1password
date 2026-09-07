@@ -88,6 +88,7 @@ func (client *OpClient) ListUsers() (RegistriesAndUsernames, error) {
 	names := make(RegistriesAndUsernames, len(nameRefs))
 
 	for reg, nameRef := range nameRefs {
+		logging.Debug("will retrieve secret at '%s'", nameRef)
 		response, err := client.sdkClient.Secrets().Resolve(context.Background(), nameRef)
 		if err != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "Could not retrieve username for '%s': %v\n", reg, err)
