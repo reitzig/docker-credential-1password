@@ -3,6 +3,9 @@ name: Trigger Release
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 # TODO: add variable/argument to trigger a maintenance release
 #       -> create a suitable changie entry
 #       -> override release description?
