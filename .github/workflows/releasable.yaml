@@ -9,6 +9,9 @@ on:
     - unlabeled
     - labeled
 
+permissions:
+  contents: read
+
 jobs:
   unambiguous-next-version:
     name: Unambiguous next version

@@ -13,6 +13,9 @@ on:
     - synchronize
     - reopened
 
+permissions:
+  contents: read
+
 jobs:
   changes:
     name: Detect Changes # as a workaround for lack of out-of-the-box fine-grained control
