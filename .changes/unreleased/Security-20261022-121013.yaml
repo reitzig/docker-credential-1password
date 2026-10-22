@@ -1,3 +1,0 @@
-kind: Security
-body: Bump golang.org/x/sys to 0.44.0; fixes CVE-2026-39824
-time: 2026-10-22T12:10:13.215271446+02:00
