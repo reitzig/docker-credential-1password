@@ -8,6 +8,8 @@ on:
     - reopened
     - unlabeled
     - labeled
+    branches-ignore:
+    - 'release/**'
 
 permissions:
   contents: read
