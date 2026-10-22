@@ -20,16 +20,20 @@ fi
 # -> we can now assume that we release a state that tested green,
 #    as long as we haven't circumvent any branch protection rules!
 
+# Create release branch
+release_branch="release/$(changie next auto)"
+git switch -c "${release_branch}"
+
 # Assemble & commit changelog
 changie batch auto
 changie merge
 version="$(changie latest)"
-git add .changes/unreleased/* ".changes/${version}.md"
+git add .changes/unreleased/* ".changes/${version}.md" "CHANGELOG.md"
 git commit --all -m "chore(docs): CHANGELOG for ${version}"
 
 # Tag & push
 git tag "${version}"
-git push origin "main" "${version}"
+git push --set-upstream origin "${release_branch}" "${version}"
 
 repo_url="$(
     git remote get-url origin \
@@ -41,6 +45,10 @@ repo_url="$(
 
 cat <<LINES
 🥳 All done!
+➡️ Create & merge: ${repo_url}/compare/${release_branch}?expand=1
+    ⚠️ Merge ff-only!
 ⏳️ Wait for release workflow to complete: ${repo_url}/actions/workflows/release.yaml
 ➡️ Review & approve: ${repo_url}/releases/tag/${version}
 LINES
+
+git switch main
