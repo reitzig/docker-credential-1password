@@ -12,6 +12,7 @@ go = '1.27'
 golangci-lint = '2'
 goreleaser = '2'
 lefthook = '2'
+shellcheck = '0.11'
 
 [tasks.build]
 run = "goreleaser build --snapshot --clean --single-target"
@@ -35,8 +36,17 @@ run = "ec --config .config/editorconfig-checker.json"
 [tasks.check-git-history]
 run = "cog --config .config/cog.toml check"
 
+[tasks.lint-scripts]
+sources = [".scripts/*"]
+outputs = { auto = true }
+run = "shellcheck -S warning .scripts/*"
+
 [tasks.lint]
-depends = ["lint-go", "check-goreleaser", "editorconfig", "check-git-history"]
+depends = ["lint-go", "check-goreleaser", "editorconfig", "check-git-history", "lint-scripts"]
 
 [tasks.test]
 run = "go test -cover ./..."
+
+[tasks.prepare-release]
+depends = ["lint", "test"]
+file = ".scripts/prepare-release.sh"

@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  # TODO: re-run or depend on tests?
+
+  release:
+    runs-on: 'ubuntu-latest'
+    permissions:
+      contents: write
+    env:
+      GOMODCACHE: /tmp/go-pkg-mod
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        fetch-depth: 0
+
+    - uses: jdx/mise-action@9b200bcecbfd6303e69a4a261b2e09e3757440a7 # v5
+
+    # TODO: 💡 confirm "on main"
+    # TODO: 💡 confirm changelog exists
+    # TODO: 💡 confirm no unreleased changes
+
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: ${{ env.GOMODCACHE }}
+        key: ${{ runner.os }}-gopkgmod-${{ hashFiles('go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-gopkgmod-
+
+    - name: Install cross-compiler
+      run: |
+        sudo apt-get update \
+        && sudo apt-get install -y \
+          'gcc-14-aarch64-linux-gnu-base' \
+          'g++-aarch64-linux-gnu'
+
+    - name: Run GoReleaser
+      run: |
+        goreleaser release --clean \
+          --release-notes=.changes/${{ env.GITHUB_REF_NAME }}.md \
+          --verbose \
+          --skip=validate \
+          --draft
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GORELEASER_CURRENT_TAG: "${{ env.GITHUB_REF_NAME }}"

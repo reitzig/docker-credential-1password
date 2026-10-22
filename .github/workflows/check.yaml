@@ -76,6 +76,9 @@ jobs:
     - name: editorconfig
       run: ec --config .config/editorconfig-checker.json
 
+    - name: shellcheck
+      run: shellcheck -S warning .scripts/*
+
   test:
     runs-on: 'ubuntu-latest'
     needs: changes
