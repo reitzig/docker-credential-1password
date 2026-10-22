@@ -25,9 +25,9 @@ else
         exit 3
     fi
     # -> we can now assume that we release a state that tested green,
-    #    as long as we haven't circumvent any branch protection rules!
+    #    as long as we haven't circumvented any branch protection rules!
 
-    # TODO: confirm no staged changes to prevent accidents
+    git stash --message 'Keep release prep clean'
 fi
 
 # Create release branch
@@ -47,6 +47,8 @@ if testing_workflow; then
     git push origin "${version}"
 else
     git push --set-upstream origin "${release_branch}" "${version}"
+    git switch main
+    git stash pop
 fi
 
 repo_url="$(
@@ -64,5 +66,3 @@ cat <<LINES
 ⏳️ Wait for release workflow to complete: ${repo_url}/actions/workflows/release.yaml
 ➡️ Review & approve: ${repo_url}/releases/tag/${version}
 LINES
-
-git switch main
