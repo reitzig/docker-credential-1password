@@ -45,10 +45,10 @@ jobs:
     - name: Run GoReleaser
       run: |
         goreleaser release --clean \
-          --release-notes=.changes/${{ env.GITHUB_REF_NAME }}.md \
+          --release-notes=.changes/${{ github.ref_name }}.md \
           --verbose \
           --skip=validate \
           --draft
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GORELEASER_CURRENT_TAG: "${{ env.GITHUB_REF_NAME }}"
+        GORELEASER_CURRENT_TAG: "${{ github.ref_name }}"
