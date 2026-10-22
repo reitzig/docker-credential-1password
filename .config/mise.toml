@@ -50,3 +50,8 @@ run = "go test -cover ./..."
 [tasks.prepare-release]
 depends = ["lint", "test"]
 file = ".scripts/prepare-release.sh"
+
+[tasks.test-release-workflow]
+depends = ["lint", "test"]
+env = { TESTING_WORKFLOW = "true" }
+file = ".scripts/prepare-release.sh"

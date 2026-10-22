@@ -2,23 +2,33 @@
 
 set -euo pipefail
 
-# Confirm we are on main
-if [[ "$(git branch --show-current)" != "main" ]]; then
-    echo "❌ Will not release branch '$(git branch --show-current)'"
-    exit 1
-fi
+testing_workflow() {
+    [[ -n "${TESTING_WORKFLOW:-}" ]]
+}
 
-# Confirm we are up to date
-git fetch
-if (($(git rev-list --left-only --count main...origin/main) > 0)); then
-    echo "❌ Will not release while ahead of origin"
-    exit 2
-elif (($(git rev-list --right-only --count main...origin/main) > 0)); then
-    echo "❌ Will not release while behind origin"
-    exit 3
+if testing_workflow; then
+    echo "⚠️ Testing workflow, skipping some checks!"
+else
+    # Confirm we are on main
+    if [[ "$(git branch --show-current)" != "main" ]]; then
+        echo "❌ Will not release branch '$(git branch --show-current)'"
+        exit 1
+    fi
+
+    # Confirm we are up to date
+    git fetch
+    if (($(git rev-list --left-only --count main...origin/main) > 0)); then
+        echo "❌ Will not release while ahead of origin"
+        exit 2
+    elif (($(git rev-list --right-only --count main...origin/main) > 0)); then
+        echo "❌ Will not release while behind origin"
+        exit 3
+    fi
+    # -> we can now assume that we release a state that tested green,
+    #    as long as we haven't circumvent any branch protection rules!
+
+    # TODO: confirm no staged changes to prevent accidents
 fi
-# -> we can now assume that we release a state that tested green,
-#    as long as we haven't circumvent any branch protection rules!
 
 # Create release branch
 release_branch="release/$(changie next auto)"
@@ -33,7 +43,11 @@ git commit --all -m "chore(docs): CHANGELOG for ${version}"
 
 # Tag & push
 git tag "${version}"
-git push --set-upstream origin "${release_branch}" "${version}"
+if testing_workflow; then
+    git push origin "${version}"
+else
+    git push --set-upstream origin "${release_branch}" "${version}"
+fi
 
 repo_url="$(
     git remote get-url origin \
