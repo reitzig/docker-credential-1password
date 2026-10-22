@@ -1,0 +1,3 @@
+kind: Security
+body: Bump Go to 1.27.3; fixes CVE-2026-111943
+time: 2026-10-22T10:57:11.060497602+02:00
