@@ -108,6 +108,7 @@ jobs:
     if: ${{ needs.changes.outputs.build == 'true' }}
     env:
       GOMODCACHE: /tmp/go-pkg-mod
+      APT_CACHE: /tmp/apt-cache
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -124,18 +125,15 @@ jobs:
       - name: Validate config
         run: goreleaser check
 
-      # TODO: is caching worth it here? Observe!
-      # - name: Install cross-compiler
-      #   uses: awalsh128/cache-apt-pkgs-action@v1
-      #   with:
-      #     packages: gcc-14-aarch64-linux-gnu-base g++-aarch64-linux-gnu
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ env.APT_CACHE }}
+          key: ${{ runner.os }}-aptcache-${{ hashFiles('.scripts/install-crosscompiler.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-aptcache-
 
       - name: Install cross-compiler
-        run: |
-          sudo apt-get update \
-          && sudo apt-get install -y \
-            'gcc-14-aarch64-linux-gnu-base' \
-            'g++-aarch64-linux-gnu'
+        run: .scripts/install-crosscompiler.sh
 
       - name: Check build setup
         run: goreleaser build --clean --snapshot --verbose
