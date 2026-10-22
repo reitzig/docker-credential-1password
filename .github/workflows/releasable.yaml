@@ -21,7 +21,7 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.sha }} # here, we're not interested in the merge commit
         fetch-depth: '0'
-    - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+    - uses: jdx/mise-action@9b200bcecbfd6303e69a4a261b2e09e3757440a7 # v5
 
     - name: Confirm consistency of changelog and commit history
       run: |
@@ -67,7 +67,7 @@ jobs:
           Please add one with `changie new`, or
           apply label '${skip-label}' to the pull request."
 
-    - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+    - uses: jdx/mise-action@9b200bcecbfd6303e69a4a261b2e09e3757440a7 # v5
 
     - name: Test changelog assembly
       id: changie_dry_run
