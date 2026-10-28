@@ -74,7 +74,7 @@ jobs:
       run: golangci-lint run
 
     - name: editorconfig
-      run: ec --config .config/editorconfig-checker.json
+      run: editorconfig-checker --config .config/editorconfig-checker.json
 
     - name: shellcheck
       run: shellcheck -S warning .scripts/*

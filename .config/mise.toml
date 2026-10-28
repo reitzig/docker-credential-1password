@@ -31,7 +31,7 @@ outputs = { auto = true }
 run = "goreleaser check"
 
 [tasks.editorconfig]
-run = "ec --config .config/editorconfig-checker.json"
+run = "editorconfig-checker --config .config/editorconfig-checker.json"
 
 [tasks.check-git-history]
 run = "cog --config .config/cog.toml check"
